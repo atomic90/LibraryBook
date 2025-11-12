@@ -23,8 +23,8 @@ if "phase" not in st.session_state:
     st.session_state.phase = "borrow"
 if "last_author" not in st.session_state:
     st.session_state.last_author = ""
-if "awaiting_input" not in st.session_state:
-    st.session_state.awaiting_input = True
+if "input_counter" not in st.session_state:
+    st.session_state.input_counter = 0
 
 # -------------------
 # Funciones
@@ -67,13 +67,16 @@ elif st.session_state.output == "" and st.session_state.phase == "return":
 # -------------------
 st.title("Library Console App")
 st.text_area("Console", value=st.session_state.output, height=500, disabled=True)
-user_input = st.text_input("", key="user_input")
+
+input_key = f"input_{st.session_state.input_counter}"
+user_input = st.text_input("", key=input_key)
 
 if st.button("Submit") and user_input.strip() != "":
     try:
         choice = int(user_input.strip())
     except ValueError:
         log("\nInvalid input. Please enter a number.")
+        st.session_state.input_counter += 1
         st.stop()
 
     if st.session_state.phase == "borrow":
@@ -120,5 +123,4 @@ if st.button("Submit") and user_input.strip() != "":
             show_borrowed_books()
             log("\nWhich book would you like to return? (Enter number or 0 to exit):")
 
-    # Limpiar input
-    st.session_state.user_input = ""
+    st.session_state.input_counter += 1
