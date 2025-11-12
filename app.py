@@ -26,6 +26,8 @@ if "phase" not in st.session_state:
     st.session_state.phase = "borrow"
 if "total_returned" not in st.session_state:
     st.session_state.total_returned = False
+if "initialized" not in st.session_state:
+    st.session_state.initialized = False
 
 # -------------------
 # Funciones de lógica
@@ -54,6 +56,12 @@ def suggest_books_by_author(author_name):
 # Interfaz Streamlit (modo consola)
 # -------------------
 st.title("Library Console Simulation")
+
+# Mostrar lista inicial una vez
+if not st.session_state.initialized:
+    show_book_list()
+    st.session_state.initialized = True
+
 st.text_area("Console", value=st.session_state.output, height=500, key="console_output", disabled=True)
 user_input = st.text_input("Input:", key="input")
 
@@ -73,11 +81,13 @@ if st.button("Enter") and user_input.strip() != "":
             st.session_state.last_borrowed_author = book_authors[selection - 1]
             log(f"\nYou have borrowed: {book_titles[selection - 1]}")
             suggest_books_by_author(st.session_state.last_borrowed_author)
+            show_book_list()
         elif selection in st.session_state.borrowed_books:
             log("\nYou have already borrowed this book. Please choose another.")
+            show_book_list()
         else:
             log("\nInvalid selection. Please try again.")
-        show_book_list()
+            show_book_list()
 
     elif st.session_state.phase == "return":
         if len(st.session_state.borrowed_books) == 0 and not st.session_state.total_returned:
@@ -101,7 +111,3 @@ if st.button("Enter") and user_input.strip() != "":
                 show_borrowed_books()
 
     st.experimental_rerun()
-
-# Mostrar lista inicial al arrancar
-if st.session_state.output == "" and st.session_state.phase == "borrow":
-    show_book_list()
