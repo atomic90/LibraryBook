@@ -23,8 +23,8 @@ if "phase" not in st.session_state:
     st.session_state.phase = "borrow"
 if "last_author" not in st.session_state:
     st.session_state.last_author = ""
-if "input_counter" not in st.session_state:
-    st.session_state.input_counter = 0
+if "step" not in st.session_state:
+    st.session_state.step = "show_menu"
 
 # -------------------
 # Funciones
@@ -49,78 +49,72 @@ def suggest_books_by_author(author_name):
             log(f"{i + 1}) {book_titles[i]}")
 
 # -------------------
-# Primera ejecución
-# -------------------
-if st.session_state.output == "" and st.session_state.phase == "borrow":
-    show_book_list()
-    log("\nWhich book would you like to borrow? (Enter number or 0 to exit):")
-
-elif st.session_state.output == "" and st.session_state.phase == "return":
-    if st.session_state.borrowed_books:
-        show_borrowed_books()
-        log("\nWhich book would you like to return? (Enter number or 0 to exit):")
-    else:
-        log("You have no borrowed books.")
-
-# -------------------
-# Mostrar consola y entrada
+# Interfaz
 # -------------------
 st.title("Library Console App")
 st.text_area("Console", value=st.session_state.output, height=500, disabled=True)
 
-input_key = f"input_{st.session_state.input_counter}"
-user_input = st.text_input("", key=input_key)
+with st.form("console_form"):
+    user_input = st.text_input("", label_visibility="collapsed")
+    submitted = st.form_submit_button("Enter")
 
-if st.button("Submit") and user_input.strip() != "":
+if submitted:
     try:
         choice = int(user_input.strip())
     except ValueError:
         log("\nInvalid input. Please enter a number.")
-        st.session_state.input_counter += 1
         st.stop()
 
     if st.session_state.phase == "borrow":
-        if choice == 0:
-            log("\nThank you for using the library borrowing system.")
-            st.session_state.phase = "return"
-            if st.session_state.borrowed_books:
-                show_borrowed_books()
-                log("\nWhich book would you like to return? (Enter number or 0 to exit):")
+        if st.session_state.step == "show_menu":
+            if choice == 0:
+                log("\nThank you for using the library borrowing system.")
+                st.session_state.phase = "return"
+                st.session_state.step = "show_menu"
+            elif 1 <= choice <= len(book_titles) and choice not in st.session_state.borrowed_books:
+                st.session_state.borrowed_books.append(choice)
+                st.session_state.last_author = book_authors[choice - 1]
+                log(f"\nYou have borrowed: {book_titles[choice - 1]}")
+                suggest_books_by_author(st.session_state.last_author)
+            elif choice in st.session_state.borrowed_books:
+                log("\nYou have already borrowed this book. Please choose another.")
             else:
-                log("\nYou have no borrowed books.")
-        elif 1 <= choice <= len(book_titles) and choice not in st.session_state.borrowed_books:
-            st.session_state.borrowed_books.append(choice)
-            st.session_state.last_author = book_authors[choice - 1]
-            log(f"\nYou have borrowed: {book_titles[choice - 1]}")
-            suggest_books_by_author(st.session_state.last_author)
-            show_book_list()
-            log("\nWhich book would you like to borrow? (Enter number or 0 to exit):")
-        elif choice in st.session_state.borrowed_books:
-            log("\nYou have already borrowed this book. Please choose another.")
-            show_book_list()
-            log("\nWhich book would you like to borrow? (Enter number or 0 to exit):")
-        else:
-            log("\nInvalid selection. Please try again.")
+                log("\nInvalid selection. Please try again.")
+
+            # Show the menu again
             show_book_list()
             log("\nWhich book would you like to borrow? (Enter number or 0 to exit):")
 
     elif st.session_state.phase == "return":
-        if choice == 0:
-            if st.session_state.borrowed_books:
+        if st.session_state.step == "show_menu":
+            if len(st.session_state.borrowed_books) == 0:
+                log("\nAll books returned. Thanks for using our service.")
+                st.stop()
+            if choice == 0:
                 log("\nYou still have books to return.")
-            log("\nThank you for returning books. Come back soon!")
-        elif 1 <= choice <= len(st.session_state.borrowed_books):
-            index = st.session_state.borrowed_books[choice - 1]
-            log(f"\nYou have returned: {book_titles[index - 1]}")
-            st.session_state.borrowed_books.pop(choice - 1)
+                log("\nThank you for returning books. Come back soon!")
+                st.session_state.borrowed_books.clear()
+            elif 1 <= choice <= len(st.session_state.borrowed_books):
+                idx = st.session_state.borrowed_books.pop(choice - 1)
+                log(f"\nYou have returned: {book_titles[idx - 1]}")
+                if len(st.session_state.borrowed_books) == 0:
+                    log("\nAll books returned. Thanks for using our service.")
+            else:
+                log("\nInvalid selection. Please try again.")
+
+            # Show the return menu again
             if st.session_state.borrowed_books:
                 show_borrowed_books()
                 log("\nWhich book would you like to return? (Enter number or 0 to exit):")
-            else:
-                log("\nAll books returned. Thanks for using our service.")
-        else:
-            log("\nInvalid selection. Please try again.")
+
+# Primera visualización sin input
+if not submitted:
+    if st.session_state.phase == "borrow" and st.session_state.output == "":
+        show_book_list()
+        log("\nWhich book would you like to borrow? (Enter number or 0 to exit):")
+    elif st.session_state.phase == "return" and st.session_state.output == "":
+        if len(st.session_state.borrowed_books) > 0:
             show_borrowed_books()
             log("\nWhich book would you like to return? (Enter number or 0 to exit):")
-
-    st.session_state.input_counter += 1
+        else:
+            log("\nYou have no borrowed books.")
