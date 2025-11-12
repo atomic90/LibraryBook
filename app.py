@@ -1,5 +1,3 @@
-import streamlit as st
-
 # -------------------
 # Book Catalog and Authors
 # -------------------
@@ -13,126 +11,86 @@ book_authors = [
     "Ray Bradbury", "John Steinbeck", "Herman Melville", "J.D. Salinger", "Ernest Hemingway"
 ]
 
-# -------------------
-# Estado de la aplicación
-# -------------------
-if "borrowed_books" not in st.session_state:
-    st.session_state.borrowed_books = []
-if "output" not in st.session_state:
-    st.session_state.output = ""
-if "last_borrowed_author" not in st.session_state:
-    st.session_state.last_borrowed_author = ""
-if "phase" not in st.session_state:
-    st.session_state.phase = "borrow"
-if "total_returned" not in st.session_state:
-    st.session_state.total_returned = False
-if "initialized" not in st.session_state:
-    st.session_state.initialized = False
-if "do_rerun" not in st.session_state:
-    st.session_state.do_rerun = False
+borrowed_books = []
 
 # -------------------
-# Funciones de lógica
+# ----- FUNCTIONS -----
 # -------------------
-def log(text):
-    st.session_state.output += text + "\n"
+# Basic functions, without calling each other
 
 def show_book_list():
-    log("\nLibrary Book List:")
+    print("\nLibrary Book List:")
     for i in range(len(book_titles)):
-        log(f"{i + 1}) {book_titles[i]} — {book_authors[i]}")
-    log("\nWhich book would you like to borrow? (Enter the number or 0 to exit):")
+        print(str(i + 1) + ") " + book_titles[i] + " — " + book_authors[i])
+
+# show_book_list()
 
 def show_borrowed_books():
-    log("\nBorrowed Books:")
-    for i in range(len(st.session_state.borrowed_books)):
-        index = st.session_state.borrowed_books[i] - 1
-        log(f"{i + 1}) {book_titles[index]} — {book_authors[index]}")
-    log("\nWhich book would you like to return? (Enter the number or 0 to exit):")
+    print("\nBorrowed Books:")
+    for i in range(len(borrowed_books)):
+        index = borrowed_books[i] - 1
+        print(str(i + 1) + ") " + book_titles[index] + " — " + book_authors[index])
+
+# show_borrowed_books()
 
 def suggest_books_by_author(author_name):
-    log("\nOther books by the same author you might like:")
+    print("\nOther books by the same author you might like:")
     for i in range(len(book_titles)):
-        if book_authors[i] == author_name and (i + 1) not in st.session_state.borrowed_books:
-            log(f"{i + 1}) {book_titles[i]}")
+        if book_authors[i] == author_name and (i + 1) not in borrowed_books:
+            print(str(i + 1) + ") " + book_titles[i])
 
-# -------------------
-# Interfaz Streamlit (modo consola)
-# -------------------
-st.title("Library Console Simulation")
+# suggest_books_by_author("George Orwell")
 
-# Mostrar lista inicial una vez
-if not st.session_state.initialized:
+
+# -----------------------------
+# ----- MAIN PROGRAM FLOW -----
+# -----------------------------
+
+# Part 1: Borrowing books
+finished = False
+last_borrowed_author = ""
+
+while not finished:
     show_book_list()
-    st.session_state.initialized = True
+    selection = int(input("\nWhich book would you like to borrow? (Enter the number or 0 to exit): "))
 
-st.text_area("Console", value=st.session_state.output, height=500, key="console_output", disabled=True)
-user_input = st.text_input("Input:", key="input")
-
-if st.button("Enter") and user_input.strip() != "":
-    try:
-        selection = int(user_input.strip())
-    except ValueError:
-        log("\nInvalid input. Please enter a number.")
-        st.session_state.do_rerun = True
-
+    if selection == 0:
+        finished = True
+        print("\nThank you for using the library borrowing system.")
+    elif selection >= 1 and selection <= len(book_titles) and selection not in borrowed_books:
+        borrowed_books.append(selection)
+        last_borrowed_author = book_authors[selection - 1]
+        print("\nYou have borrowed: " + book_titles[selection - 1])
+        suggest_books_by_author(last_borrowed_author)
+    elif selection in borrowed_books:
+        print("\nYou have already borrowed this book. Please choose another.")
     else:
-        if st.session_state.phase == "borrow":
-            if selection == 0:
-                log("\nThank you for using the library borrowing system.")
-                st.session_state.phase = "return"
-                if st.session_state.borrowed_books:
-                    show_borrowed_books()
-                else:
-                    log("You have no borrowed books.")
+        print("\nInvalid selection. Please try again.")
 
-            elif 1 <= selection <= len(book_titles) and selection not in st.session_state.borrowed_books:
-                st.session_state.borrowed_books.append(selection)
-                st.session_state.last_borrowed_author = book_authors[selection - 1]
-                log(f"\nYou have borrowed: {book_titles[selection - 1]}")
-                suggest_books_by_author(st.session_state.last_borrowed_author)
-                show_book_list()
+# Part 2: Returning books
+finished = False
+total_returned = False
+while not finished:
+    if len(borrowed_books) == 0 and total_returned == False:
+      print("You have no borrowed books.")
+      finished = True
+    elif len(borrowed_books) == 0 and total_returned == True:
+       print("All books returned, Thanks for using our service.")
+       finished = True
+    else:
+        show_borrowed_books()
+        selection = int(input("\nWhich book would you like to return? (Enter the number or 0 to exit): "))
 
-            elif selection in st.session_state.borrowed_books:
-                log("\nYou have already borrowed this book. Please choose another.")
-                show_book_list()
-
-            else:
-                log("\nInvalid selection. Please try again.")
-                show_book_list()
-
-        elif st.session_state.phase == "return":
-            if len(st.session_state.borrowed_books) == 0 and not st.session_state.total_returned:
-                log("You have no borrowed books.")
-                st.session_state.total_returned = True
-
-            elif len(st.session_state.borrowed_books) == 0 and st.session_state.total_returned:
-                log("All books returned, Thanks for using our service.")
-
-            else:
-                if selection == 0:
-                    log("\nYou still have books to return.")
-                    log("\nThank you for returning books. Come back soon!")
-                    st.session_state.borrowed_books.clear()
-                    st.session_state.total_returned = True
-
-                elif 1 <= selection <= len(st.session_state.borrowed_books):
-                    index_to_return = st.session_state.borrowed_books[selection - 1]
-                    log(f"\nYou have returned: {book_titles[index_to_return - 1]}")
-                    st.session_state.borrowed_books.pop(selection - 1)
-                    if len(st.session_state.borrowed_books) == 0:
-                        st.session_state.total_returned = True
-                        log("\nAll books returned, Thanks for using our service.")
-                    else:
-                        show_borrowed_books()
-
-                else:
-                    log("\nInvalid selection. Please try again.")
-                    show_borrowed_books()
-
-    st.session_state.do_rerun = True
-
-# Ejecutar rerun de forma segura
-if st.session_state.get("do_rerun"):
-    st.session_state.do_rerun = False
-    st.experimental_rerun()
+        if selection == 0:
+            if len(borrowed_books) > 0:
+                print("\nYou still have books to return.")
+            finished = True
+            print("\nThank you for returning books. Come back soon!")
+        elif selection >= 1 and selection <= len(borrowed_books):
+            index_to_return = borrowed_books[selection - 1]
+            print("\nYou have returned: " + book_titles[index_to_return - 1])
+            borrowed_books.pop(selection - 1)
+            if len(borrowed_books) == 0:
+              total_returned = True
+        else:
+            print("\nInvalid selection. Please try again.")
