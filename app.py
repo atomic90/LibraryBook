@@ -9,14 +9,18 @@ def init_state():
     st.session_state.initialized = True
 
     st.session_state.catalog_books = [
-        "1984", "To Kill a Mockingbird", "The Great Gatsby", "Pride and Prejudice",
-        "Moby-Dick", "War and Peace", "The Catcher in the Rye", "Crime and Punishment",
-        "The Hobbit", "Brave New World"
+        "1984", "Animal Farm",
+        "To Kill a Mockingbird", "Go Set a Watchman",
+        "The Great Gatsby", "Tender Is the Night",
+        "Pride and Prejudice", "Sense and Sensibility",
+        "Moby-Dick", "Billy Budd"
     ]
     st.session_state.authors = [
-        "George Orwell", "Harper Lee", "F. Scott Fitzgerald", "Jane Austen",
-        "Herman Melville", "Leo Tolstoy", "J.D. Salinger", "Fyodor Dostoevsky",
-        "J.R.R. Tolkien", "Aldous Huxley"
+        "George Orwell", "George Orwell",
+        "Harper Lee", "Harper Lee",
+        "F. Scott Fitzgerald", "F. Scott Fitzgerald",
+        "Jane Austen", "Jane Austen",
+        "Herman Melville", "Herman Melville"
     ]
 
     st.session_state.borrowed_books = []
