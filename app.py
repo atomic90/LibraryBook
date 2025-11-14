@@ -148,8 +148,10 @@ def process_return_input(user_text):
     catalog = st.session_state.catalog_books
 
     if selection == 0:
+        if len(borrowed) > 0:
+            print_newline_then("Note: You still have borrowed books that were not returned.")
         st.session_state.phase = "done"
-        print_newline_then("Thank you for using our returning service. See you soon!")
+        print_line("Thank you for using our returning service. See you soon!")
         st.session_state.prompt_mode = None
         st.rerun()
         return
